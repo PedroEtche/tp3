@@ -150,3 +150,4 @@ def page_rank(grafo, iteraciones = 100, d = 0.8):
             for w in grafo.adyacente(vertice):
                 nuevo_rank += page_rank_vertices[w] / len(grafo.adyacente(w))
             page_rank_vertices[vertice] = d * nuevo_rank
+    return page_rank_vertices   
