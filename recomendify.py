@@ -60,7 +60,7 @@ def estructuras_basicas(archivo):
     #print(usuarios_canciones.adyacentes("sitevagalume"))
     #print(usuarios_canciones.adyacentes("fernandagi17"))
     #print(usuarios_canciones)
-    return usuarios_canciones, set_de_canciones
+    return usuarios_canciones, set_de_canciones, set_de_usuarios
 
 
 def crear_diccionario_de_canciones_y_usuarios_que_la_escuchan(grafo_usuarios_canciones, canciones):
@@ -74,7 +74,12 @@ def crear_diccionario_de_canciones_y_usuarios_que_la_escuchan(grafo_usuarios_can
     recorro sus adyacentes 
     Nota: Por como funciona la notacion O se puede decir que este algoritmo es O(u + c + l)
     """
-    vertice_aleatorio = random.choice(canciones)
+    for cancion in canciones:
+        # Agarro una tupla (cancion, autor) al azar del set de canciones
+        # para que sea mi vertice aleatorio. Si usaria el metodo vertice_aleatorio podria
+        # tener el problema de que el vertice fuese un usuario
+        vertice_aleatorio = cancion     
+        break
     dicc = {}
     padres, orden = biblioteca_de_funciones.dfs(grafo_usuarios_canciones, vertice_aleatorio)
     for can in canciones:
@@ -127,7 +132,7 @@ def relaciones_canciones(grafo_usuarios_canciones, canciones, usuarios):
         lista_canciones_que_comparten_usuarios = []
         for clave in dicc:
             if usuario in dicc[clave]:
-                lista_canciones_que_comparten_usuarios.append()
+                lista_canciones_que_comparten_usuarios.append(clave)
         unir_vertices(grafo, lista_canciones_que_comparten_usuarios) 
     return grafo           
 
@@ -148,7 +153,16 @@ def ordenar_lista_de_tuplas(lista_de_tuplas):
 def mas_importantes(relaciones_de_canciones, n):
     diccionario_ranking = biblioteca_de_funciones.page_rank(relaciones_de_canciones)
     lista = list(diccionario_ranking.items())
-    ordenar_lista_de_tuplas(lista)
+
+    # Este es el resultado actual de la lista, parace que hay un bug en la generacion del grafo
+    # [(('All Is Full Of Love', 'Björk'), 3.03094293824642e-21),
+    # (('Always', 'Bon Jovi'), 0.0), (("Livin' On A Prayer", 'Bon Jovi'), 0.0),
+    # (('Such Great Heights', 'The Postal Service'), 2.6166886850774265e-21),
+    # (("It's My Life", 'Bon Jovi'), 0.0),
+    # (('Return The Favor (feat. Timbaland)', 'Keri Hilson'), 2.259052649329539e-21)]
+    lista = ordenar_lista_de_tuplas(lista)
+
+    print(lista)
 
     for i in range(n):
         print(lista[i][1])
@@ -161,8 +175,17 @@ def recomendacion():
 
 # Ciclo de n canciones
 
-def ciclo():
-    pass
+def ciclo(grafo_relacion_canciones , n, cancion):
+    lista_ciclos_hamiltonianos = biblioteca_de_funciones.ciclo_hamiltoneano(grafo_relacion_canciones, cancion)
+    ciclo = 0
+    for sublista in lista_ciclos_hamiltonianos:
+        if len(sublista) == n:
+            ciclo = sublista
+    if ciclo == 0:
+        print("No se encontro recorrido")
+    else:
+        for tupla in ciclo:
+            print("{cancion} - {artista} --> ".format(cancion = tupla[CANCION], artista = tupla[ARTISTA]))
 
 # Todas en Rango
 
@@ -200,8 +223,11 @@ def parseo_de_comando(comando_y_parametro):
 
 def main(archivo_spotify):
     archivo = open(archivo_spotify)
-    usuarios_canciones, _ = estructuras_basicas(archivo)
+    grafo_usuarios_canciones, set_de_canciones, set_de_usuarios = estructuras_basicas(archivo)
     archivo.close()
+
+    grafo_relaciones_canciones = relaciones_canciones(grafo_usuarios_canciones, set_de_canciones, set_de_usuarios)
+    print(grafo_relaciones_canciones)
 
     usuario_input = ""
     while usuario_input != "\0":
@@ -209,9 +235,10 @@ def main(archivo_spotify):
         comando, parametro = parseo_de_comando(usuario_input)
 
         if comando == CAMINO:
-            camino(usuarios_canciones, "Don't Go Away - Oasis", "Quitter - Eminem")
+            camino(grafo_usuarios_canciones, "Don't Go Away - Oasis", "Quitter - Eminem")
+        
         elif comando == MAS_IMPORTANTES:
-            mas_importantes()
+            mas_importantes(grafo_relaciones_canciones, int(parametro))
 
         elif comando == RECOMENDACION:
             recomendacion()
