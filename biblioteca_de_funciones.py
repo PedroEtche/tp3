@@ -59,16 +59,26 @@ def dfs_completo(grafo):
         visitados.add(v)
         padres[v] = None
         orden[v] = 0
-        dfs(grafo, v, visitados, padres, orden)
+        _dfs(grafo, v, visitados, padres, orden)
     return padres, orden
 
-def dfs(grafo, origen, visitados, padres, orden):
+def _dfs(grafo, origen, visitados, padres, orden):
     for w in grafo.adyacentes(origen):
         if w not in visitados:
             visitados.add(w)
             padres[w] = origen
             orden[w] = orden[origen] + 1
-            dfs(grafo, w, visitados, padres, orden)
+            _dfs(grafo, w, visitados, padres, orden)
+
+def dfs(grafo, origen):
+    visitados = set()
+    padres = {}
+    orden = {}
+    visitados.add(origen)
+    padres[origen] = None
+    orden[origen] = 0
+    _dfs(grafo, origen, visitados, padres, orden)
+    return padres, orden
 
 # Camino minimos
 
@@ -115,7 +125,7 @@ def mst_prim(grafo):
 
 # Backtracking
 
-def _hamiltoneano(grafo, camino):
+def _ciclio_hamiltoneano(grafo, camino):
     inicial = camino[0]
     ultimo = camino[len(camino) - 1]
     resultados = []
@@ -127,13 +137,11 @@ def _hamiltoneano(grafo, camino):
             resultados.append(copia)
         if (adyacente in camino):
             continue
-        resultados = resultados + _hamiltoneano(grafo, copia)
+        resultados = resultados + _ciclio_hamiltoneano(grafo, copia)
     return resultados
 
-def hamiltoneano(grafo):
-    # Arranco de un vertice aleatorio
-    inicial = grafo.vertice_aleatorio()
-    return _hamiltoneano(grafo, [inicial])
+def ciclo_hamiltoneano(grafo, origen):
+    return _ciclio_hamiltoneano(grafo, origen)
 
 # Page rank
 
@@ -147,7 +155,7 @@ def page_rank(grafo, iteraciones = 100, d = 0.8):
     for _ in range(iteraciones):
         for vertice in lista_vertices:
             nuevo_rank = 0
-            for w in grafo.adyacente(vertice):
-                nuevo_rank += page_rank_vertices[w] / len(grafo.adyacente(w))
+            for w in grafo.adyacentes(vertice):
+                nuevo_rank += page_rank_vertices[w] / len(grafo.adyacentes(w))
             page_rank_vertices[vertice] = d * nuevo_rank
     return page_rank_vertices
