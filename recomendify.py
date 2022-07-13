@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Imports
 
 from grafo import Grafo
@@ -49,7 +51,7 @@ def estructuras_basicas(archivo):
     set_de_canciones = set()
     diccionario_usuarios_playlist = {}
     usuarios_canciones = Grafo() 
-    id, usuario, cancion, artista, playlist_id, playlist, _ = leer_linea(archivo)
+    id, usuario, cancion, artista, playlist_id, playlist, generos = leer_linea(archivo)
     while id != MAX:
         usuarios_canciones.agregar_vertice(usuario)
         usuarios_canciones.agregar_vertice((cancion, artista))
@@ -64,7 +66,7 @@ def estructuras_basicas(archivo):
         diccionario_usuarios_playlist[usuario][(playlist_id, playlist)].add((cancion, artista))
         set_de_canciones.add((cancion, artista))
 
-        id, usuario, cancion, artista, playlist_id, playlist, _ = leer_linea(archivo)
+        id, usuario, cancion, artista, playlist_id, playlist, generos = leer_linea(archivo)
 
     return usuarios_canciones, set_de_canciones, diccionario_usuarios_playlist
 
@@ -101,16 +103,6 @@ def proyeccion_de_grafo(grafo_usuarios_canciones, canciones, usuarios):
     for lista in diccionario_aux:
         unir_vertices(grafo_proyectado, diccionario_aux[lista])
     return grafo_proyectado
-        
-    # print("orden", len(orden))
-    # for clave in orden:
-    #     if clave not in canciones:
-    #         continue
-    #     for clave_comparar in orden:
-    #         distancia = abs(orden[clave] - orden[clave_comparar])
-    #         if distancia == 2:
-    #             grafo_proyectado.agregar_arista(clave, clave_comparar)
-    #     break
 
 # Camino
 
@@ -169,12 +161,10 @@ def impresion(lista, cantidad_imprimir, lista_de_tuplas = True):
             i += 1
         print("{usuario}".format(usuario = lista[i]))
 
-def mas_importantes(grafo_usuarios_canciones, n, set_de_canciones):
-    # Actualmente una vez que se inicia page rank que no se termina, asi que hay algun bug con esta funcion
+def mas_importantes(grafo_usuarios_canciones, set_de_canciones):
     diccionario_ranking = biblioteca_de_funciones.page_rank(grafo_usuarios_canciones, 10)
     lista = list(diccionario_ranking.items())
     ordenar_lista_de_tuplas(lista)
-    #print(importantes)
 
     importantes = []
     for tupla in lista:
@@ -190,7 +180,7 @@ def recomendacion(grafo_usuarios_canciones, n, usuarios_canciones, lista, set_us
     largo_recorrido = n * n
 
     for cancion in lista:
-        pr_personalizado = biblioteca_de_funciones.page_rank_personalizado(grafo_usuarios_canciones, cancion, largo_recorrido, 300)
+        pr_personalizado = biblioteca_de_funciones.page_rank_personalizado(grafo_usuarios_canciones, cancion, largo_recorrido, 1000)
         for clave in pr_personalizado:
             if clave not in recomendaciones:
                 recomendaciones[clave] = pr_personalizado[clave]
@@ -223,26 +213,6 @@ def recomendacion(grafo_usuarios_canciones, n, usuarios_canciones, lista, set_us
 
 # Ciclo de n canciones
 
-# def _ciclio_hamiltoneano(grafo, camino, n):
-#     inicial = camino[0]
-#     ultimo = camino[len(camino) - 1]
-#     resultados = []
-#     for adyacente in grafo.adyacentes(ultimo):
-#         copia = camino[:]
-#         copia.append(adyacente)
-#         if (adyacente == inicial and len(camino) == n):
-#             # Encontre un ciclo hamiltoneano
-#             print("encontre un ciclo")
-#             resultados.append(copia)
-#         if (adyacente in camino):
-#             continue
-#         if len(camino) == n - 1 and inicial not in grafo.adyacentes(adyacente):
-#             continue
-#         # if len(camino) == n:
-#         #     break
-#         resultados += _ciclio_hamiltoneano(grafo, copia, n)
-#     return resultados
-
 def __ciclo(grafo, camino, n, resultado):
     if len(resultado) == 0:
         inicial = camino[0]
@@ -261,7 +231,6 @@ def __ciclo(grafo, camino, n, resultado):
 def _ciclo(grafo, origen, n):
     resultado = []
     return __ciclo(grafo, [origen], n, resultado)
-    #return _ciclio_hamiltoneano(grafo, [origen], n)
 
 def ciclo(grafo_relacion_canciones , n, cancion):
     if n <= 0:
@@ -394,7 +363,7 @@ def main(archivo_spotify):
     archivo.close()
 
     grafo_relaciones_canciones = NO_FUE_CREADO
-    importantes = NO_FUE_CREADO
+    importantes = []
 
     usuario_input = ""
     while usuario_input != "\0":
@@ -402,6 +371,7 @@ def main(archivo_spotify):
             usuario_input = input()
         except EOFError:
             return
+
         comando, parametro = parseo_de_comando(usuario_input, " ")
 
         if comando == CAMINO:
@@ -415,7 +385,7 @@ def main(archivo_spotify):
             if not parametro.isdigit(): 
                 print("Ponele voluntad...", file = sys.stdout)
             if importantes == NO_FUE_CREADO:
-                importantes = mas_importantes(grafo_usuarios_canciones, int(parametro), set_de_canciones)
+                importantes = mas_importantes(grafo_usuarios_canciones, set_de_canciones)
             impresion(importantes, int(parametro))
 
         elif comando == RECOMENDACION:
@@ -434,7 +404,6 @@ def main(archivo_spotify):
         elif comando == CICLO or comando == RANGO:
             if grafo_relaciones_canciones == NO_FUE_CREADO:
                 grafo_relaciones_canciones = proyeccion_de_grafo(grafo_usuarios_canciones, set_de_canciones, diccionario_usuarios_playlist)
-                print("Se pudo crear la proyeccion")
             
             n, cancion, autor = parseo_de_parametro_ciclo_rango(parametro)
             if (cancion, autor) not in set_de_canciones:
@@ -448,11 +417,5 @@ def main(archivo_spotify):
             print("Comando incorrecto", file = sys.stdout)
 
 
-
 script, archivo_spotify = sys.argv
 main(archivo_spotify)
-
-# Esto es para debuggear el programa
-
-# archivo = "spotify-mini.tsv"
-# main(archivo)
