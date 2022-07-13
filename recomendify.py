@@ -363,7 +363,7 @@ def main(archivo_spotify):
     archivo.close()
 
     grafo_relaciones_canciones = NO_FUE_CREADO
-    importantes = []
+    importantes = NO_FUE_CREADO
 
     usuario_input = ""
     while usuario_input != "\0":
