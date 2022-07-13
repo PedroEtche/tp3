@@ -213,24 +213,25 @@ def recomendacion(grafo_usuarios_canciones, n, usuarios_canciones, lista, set_us
 
 # Ciclo de n canciones
 
-def __ciclo(grafo, camino, n, resultado):
-    if len(resultado) == 0:
-        inicial = camino[0]
-        ultimo = camino[len(camino) - 1]
-        for adyacente in grafo.adyacentes(ultimo):
-            copia = camino[:]
-            copia.append(adyacente)
-            if (adyacente == inicial and len(camino) == n):
-                # Encontre un ciclo de largo n
-                resultado.append(copia)
-            if (adyacente in camino or len(camino) > n) :
-                continue
-            __ciclo(grafo, copia, n, resultado)
-    return resultado
+def camino_h(grafo, v, origen, n, visitados, camino):
+    visitados.add(v)
+    if len(camino) == n:
+        if origen in grafo.adyacentes(v):
+            return camino
+        visitados.remove(v)
+        return None
+    for w in grafo.adyacentes(v):
+        if w in visitados:
+            continue
+        solucion = camino_h(grafo, w, origen, n, visitados, camino + [w])
+        if solucion != None:
+            return solucion
+    visitados.remove(v)
+    return None
 
 def _ciclo(grafo, origen, n):
-    resultado = []
-    return __ciclo(grafo, [origen], n, resultado)
+    visitados = set()
+    return camino_h(grafo, origen, origen, n, visitados, [origen])
 
 def ciclo(grafo_relacion_canciones , n, cancion):
     if n <= 0:
@@ -239,14 +240,13 @@ def ciclo(grafo_relacion_canciones , n, cancion):
         print("{cancion} - {artista}".format(cancion = cancion[CANCION], artista = cancion[ARTISTA]))
     else:
         lista_ciclos_hamiltonianos = _ciclo(grafo_relacion_canciones, cancion, n)
-        posible_ciclo = lista_ciclos_hamiltonianos[0]
+        posible_ciclo = lista_ciclos_hamiltonianos
         if posible_ciclo == []:
             print("No se encontro recorrido")
         else:
-            for i in range(len(posible_ciclo) - 1):
+            for i in range(len(posible_ciclo)):
                 print("{cancion} - {artista} --> ".format(cancion = posible_ciclo[i][CANCION], artista = posible_ciclo[i][ARTISTA]), end = '')
-            i += 1
-            print("{cancion} - {artista}".format(cancion = posible_ciclo[i][CANCION], artista = posible_ciclo[i][ARTISTA]))
+            print("{cancion} - {artista}".format(cancion = cancion[CANCION], artista = cancion[ARTISTA]))
 
 # Todas en Rango
 
